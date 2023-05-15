@@ -1,8 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { UserEntity } from './user/user.entity';
+import { UserModule } from './user/user.module';
+import { sessionEntity } from './auth/auth.entity';
+import { AuthorizationMiddleware } from './auth/auth.middelware';
 
 @Module({
   imports: [
@@ -14,10 +17,17 @@ import { UserEntity } from './user/user.entity';
       username: "root",
       password: "eza3810421",
       database: "sample2",
-      entities: [UserEntity],
+      entities: [UserEntity, sessionEntity],
       synchronize: true,
     }),
-    AuthModule
+    AuthModule,
+    UserModule
   ]
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthorizationMiddleware)
+      .forRoutes("user");
+  }
+}
